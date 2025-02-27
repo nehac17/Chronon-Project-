@@ -1,0 +1,5 @@
+Dockerfile: Builds a container with both Python and Scala (and Java) installed.
+dynamic_pipeline.py: A continuously running Python script that monitors an input directory for JSON files, calls a Scala transformation (packaged in DataTransformer.jar) for each new file, and loads the resulting data into MongoDB.
+DataTransformer.scala: Reads a JSON file, adds a computed “total” field (price × quantity) to each record, and writes the updated JSON.
+Docker Compose: Orchestrates the pipeline container together with a MongoDB container, ensuring inter-container communication via the hostname “mongodb.”
+This setup gives you a dynamic, multi-language data pipeline for an ecommerce website that continuously ingests files, transforms the data, and stores it in MongoDB—all running inside Docker. For more information on Docker Compose and MongoDB integration, see the Docker Compose documentation and MongoDB Docker image docs.F

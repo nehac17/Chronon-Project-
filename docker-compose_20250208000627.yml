@@ -1,0 +1,14 @@
+version: '3'
+services:
+  pipeline:
+    build: .
+    container_name: dynamic_pipeline
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/app
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
