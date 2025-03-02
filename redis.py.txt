@@ -1,0 +1,68 @@
+import time
+import redis
+import pymongo
+from bson.objectid import ObjectId
+
+# ----- Set up connections -----
+# Connect to Redis
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+# Connect to MongoDB
+mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
+mongo_db = mongo_client["customer"]      # Replace with your DB name
+mongo_collection = mongo_db["customerPrediction"]  # Replace with your collection name
+
+# ----- Utility functions for state management -----
+def get_last_processed_id():
+    """Retrieve the last processed MongoDB document ID from Redis."""
+    last_id = redis_client.get("last_processed_id")
+    if last_id:
+        return ObjectId(last_id.decode('utf-8'))
+    return None
+
+def set_last_processed_id(last_id):
+    """Store the last processed MongoDB document ID in Redis."""
+    redis_client.set("last_processed_id", str(last_id))
+
+# ----- Your algorithm's training function -----
+def train_algorithm(data):
+    """
+    Update or train your algorithm with new data.
+    Replace the print statement with your model update logic.
+    """
+    print("Training algorithm with data:", data)
+    
+
+# ----- Main loop for continuous training -----
+def continuous_training(poll_interval=10):
+    """
+    Continuously poll MongoDB for new documents and update the algorithm.
+    
+    poll_interval: time in seconds to wait between polls.
+    """
+    last_id = get_last_processed_id()
+    
+    while True:
+        # Build a query to fetch documents with an _id greater than the last processed one
+        query = {}
+        if last_id:
+            query = {"_id": {"$gt": last_id}}
+        
+        # Retrieve new documents, sorted by _id to ensure order
+        new_documents = list(mongo_collection.find(query).sort("_id", 1))
+        
+        if new_documents:
+            for doc in new_documents:
+                # Train your algorithm with each new document
+                train_algorithm(doc)
+                # Update the last processed _id after handling each document
+                last_id = doc["_id"]
+            set_last_processed_id(last_id)
+        else:
+            print("No new data. Waiting...")
+        
+        # Wait before the next poll
+        time.sleep(poll_interval)
+
+if __name__ == "__main__":
+    continuous_training()
